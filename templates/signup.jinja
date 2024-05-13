@@ -1,0 +1,104 @@
+<!-- 
+Sign up page, pretty much the same as login.
+-->
+{% extends 'base.jinja' %}
+
+
+{% block content %} 
+    <h1>Sign Up</h1>
+    <form id="signup-form">
+        <p>Username</p>
+        <input id="username"/>
+        <p>Password</p>
+        <input id="password" type="password"/>
+        <button type="submit">Sign up</button>
+    </form>
+
+    <script>
+
+        // form is safer than just onclick function
+        document.getElementById("signup-form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+    
+            // call function
+            signup();
+        });
+
+        // Function to check if the input contains XSS character
+        // see: https://security.snyk.io/vuln/SNYK-JS-SERIALIZEJAVASCRIPT-536840
+        function containsSpecialCharacters(text) {
+            var regex = /[?&/<>]/;
+            return regex.test(text);
+        }
+
+        function isValidURL(string) {
+            if (string.length == 0) {
+                return false;
+            }
+            if (string[0] == "/") {
+                return true;
+            }
+            return false;
+        }
+
+        // check if the password is secured
+        function isSecuredPassword(password) {
+            var strength = 0;
+            // need to include lowercase
+            if (password.match(/[a-z]+/)) {
+                strength += 1;
+            }
+            // need to include uppercase
+            if (password.match(/[A-Z]+/)) {
+                strength += 1;
+            }
+            // need to include number
+            if (password.match(/[0-9]+/)) {
+                strength += 1;
+            }
+            // need to include special character
+            if (password.match(/[!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]+/)) {
+                strength += 1;
+            }
+            // need to be at least 12 character
+            if (password.length >= 12) {
+                strength += 1;
+            }
+          
+            return strength >= 5;
+          }
+
+        // this function is identical to login(), see login.jinja
+        async function signup() {
+            // Serialize the input to prevent XSS attacks
+            // (we not takes input with special character)
+            if (containsSpecialCharacters($("#username").val()) || containsSpecialCharacters($("#password").val())) {
+                alert("username or password can't contain following character: ?&/<>");
+                return;
+            }
+
+            // password need to be secured by today standard
+            if (!isSecuredPassword($("#password").val())) {
+                alert("password need to contains lowercase, uppercase, number, and special character and must be at least 12 characters");
+                return;
+            }
+
+            // password can't be the same as username as it's easy to guess
+            if ($("#username").val() == $("#password").val()) {
+                alert("password can't be the same as username");
+                return;
+            }
+
+            let loginURL = "{{ url_for('signup_user') }}";
+            let res = await axios.post(loginURL, {
+                username: $("#username").val(),
+                password: $("#password").val()
+            });
+            if (!isValidURL(res.data)) {
+                alert(res.data);
+                return;
+            }
+            window.open(res.data, "_self")
+        }
+    </script>
+{% endblock %}
