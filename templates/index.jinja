@@ -6,8 +6,24 @@ Index page, the "default" page when you visit "http://localhost/"
 
 
 {% block content %} 
-    <h1>Hello! Welcome to the site!</h1>
-    <p><a href={{ url_for('signup') }}> Sign Up</a></p>
-    <p><a href={{ url_for('login') }}> Login</a></p>
+    <h1>Please select your role</h1>
+    <button id="student">Student</button>
+    <button id="staff">Staff</button>
+
+    <script>
+        // Function to handle button click
+        document.getElementById("student").addEventListener("click", function() {
+            // save role in session storage, will use it again when login
+            sessionStorage.setItem("role", 0);
+            
+            // Open another page
+            window.open("{{ url_for('welcome') }}", "_self");
+        });
+
+        document.getElementById("staff").addEventListener("click", function() {
+            // Open another page
+            window.open("{{ url_for('staff') }}", "_self");
+        });
+    </script>
     
 {% endblock %}

@@ -38,6 +38,15 @@ message_history_db = {}
 def index():
     return render_template("index.jinja")
 
+# welcome page
+@app.route("/welcome")
+def welcome():
+    return render_template("welcome.jinja")
+
+# staff page
+@app.route("/staff")
+def staff():
+    return render_template("staff.jinja")
 
 # login page
 @app.route("/login")
@@ -65,6 +74,7 @@ def signup_user():
 
     username_enter = request.json.get("username")
     password_enter = request.json.get("password")
+    role = int(request.json.get("role"))
 
     # Generate a salt
     salt = bcrypt.gensalt()
@@ -72,7 +82,7 @@ def signup_user():
     enc_password = bcrypt.hashpw(password_enter.encode('utf-8'), salt)
 
     if db.get_user(username_enter) is None:
-        db.insert_user(username_enter, enc_password)
+        db.insert_user(username_enter, enc_password, role)
         print("Now, waiting for following page")
         return url_for('login', username=username_enter)
 
@@ -87,6 +97,7 @@ def login_user():
 
     Username_ENter = request.json.get("username")
     User_Enter_Pwd = request.json.get("password")
+    role = request.json.get("role")
 
     # Connect to the SQLite database
     conn = sqlite3.connect('database/main.db')
@@ -96,6 +107,9 @@ def login_user():
     result = cursor.fetchone()
 
     if result:
+        if result[2] != int(role):
+            return "Role not match"
+        
         # print("result: ", result)
         hashed_password = result[1]
         
@@ -116,6 +130,27 @@ def login_user():
     else:
         return "Error username not found"
 
+# handles a post request when user click home on navigate bar
+@app.route("/home/user", methods=["POST"])
+def home_user():
+    if not request.is_json:
+        abort(404)
+
+    return url_for('home', username=request.json.get("username"))
+
+@app.route("/repo/user", methods=["POST"])
+def repo_user():
+    if not request.is_json:
+        abort(404)
+
+    return url_for('repo', username=request.json.get("username"))
+
+@app.route("/repo/user", methods=["POST"])
+def create_user():
+    if not request.is_json:
+        abort(404)
+
+    return url_for('create', username=request.json.get("username"))
 
 # handler when a "404" error happens
 @app.errorhandler(404)
@@ -135,6 +170,32 @@ def home():
         return redirect(url_for('login'))
 
     return render_template("home.jinja", username=request.args.get("username"))
+
+# knowledge repo page, where we can reed article
+@app.route("/repo")
+def repo():
+    if request.args.get("username") is None:
+        abort(404)
+
+    certify_username = session.get('username')
+    if certify_username is None:
+        print("This user not login")
+        return redirect(url_for('login'))
+
+    return render_template("repo.jinja", username=request.args.get("username"))
+
+# craete article page, to publish an article
+@app.route("/create")
+def create():
+    if request.args.get("username") is None:
+        abort(404)
+
+    certify_username = session.get('username')
+    if certify_username is None:
+        print("This user not login")
+        return redirect(url_for('login'))
+
+    return render_template("create.jinja", username=request.args.get("username"))
 
 
 if __name__ == '__main__':

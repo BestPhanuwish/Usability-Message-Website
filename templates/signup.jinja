@@ -92,7 +92,8 @@ Sign up page, pretty much the same as login.
             let loginURL = "{{ url_for('signup_user') }}";
             let res = await axios.post(loginURL, {
                 username: $("#username").val(),
-                password: $("#password").val()
+                password: $("#password").val(),
+                role: sessionStorage.getItem("role")
             });
             if (!isValidURL(res.data)) {
                 alert(res.data);

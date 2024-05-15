@@ -56,8 +56,11 @@
 
 <!--Navbar, you'll see the username here-->
 <nav style="border-bottom: 1px solid black;">
+    <button id="homeButton">Home</button>
+    <button id="repoButton">Knowledge</button>
+    <button id="createButton">Create</button>
     <ol style="float: right">
-        <li style="display:inline-block">Username:  {{ username }} </li>
+        <li id="profile" style="display:inline-block">Username:  {{ username }}</li>
     </ol>
 </nav>
 
@@ -133,11 +136,34 @@
 </main>
 
 <script src="/static/js/libs/socket.io.min.js"></script>
+<script name="navigation-script">
+    document.getElementById("homeButton").addEventListener("click", async function() {
+        let res = await axios.post("{{ url_for('home_user') }}", {
+            username: localStorage.getItem("username")
+        });
+        window.open(res.data, "_self")
+    });
+    document.getElementById("repoButton").addEventListener("click", async function() {
+        let res = await axios.post("{{ url_for('repo_user') }}", {
+            username: localStorage.getItem("username")
+        });
+        window.open(res.data, "_self")
+    });
+    document.getElementById("createButton").addEventListener("click", async function() {
+        let res = await axios.post("{{ url_for('create_user') }}", {
+            username: localStorage.getItem("username")
+        });
+        window.open(res.data, "_self")
+    });
+</script>
 <script>
     let room_id = 0;
 
     $(document).ready(() => {
         // call every time the page restart or enter the page
+
+        // set profile name and role
+        document.getElementById("profile").innerHTML = "Username: {{ username }} Role: " + getRoleName()
 
         // kick the user if they tried to change url and login as another person
         if (window.localStorage.getItem("username") != username) {
@@ -159,6 +185,28 @@
         $("#input_box").show();
         room_id = parseInt(Cookies.get("room_id"));
     })
+
+    // Function to get role name from number
+    // Role explain:
+    // 0: Student
+    // 1: Academics Staff
+    // 2: Administrative Staff
+    // 3: Admin Staff
+    function getRoleName() {
+        let number = parseInt(sessionStorage.getItem("role"));
+        switch(number) {
+            case 0:
+                return "student";
+            case 1:
+                return "staff";
+            case 2:
+                return "administrator";
+            case 3:
+                return "admin";
+            default:
+                return "Unknown";
+        }
+    }
 
     // Function to check if the input contains XSS character
     // see: https://security.snyk.io/vuln/SNYK-JS-SERIALIZEJAVASCRIPT-536840

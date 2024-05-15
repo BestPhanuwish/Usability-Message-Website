@@ -31,9 +31,9 @@ Base.metadata.create_all(engine2)
 
 
 # inserts a user to the database
-def insert_user(username: str, password: str):
+def insert_user(username: str, password: str, role: str):
     with Session(engine) as session:
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, role=role)
         session.add(user)
         session.commit()
 

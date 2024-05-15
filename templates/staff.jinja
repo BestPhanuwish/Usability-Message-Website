@@ -1,0 +1,38 @@
+<!-- 
+Let user select what kind of staff
+-->
+{% extends 'base.jinja' %}
+
+
+{% block content %} 
+    <h1>What staff are you</h1>
+    <button id="academics">Academics Staff</button>
+    <button id="administrative">Administrative Staff</button>
+    <button id="admin">Admin Staff</button>
+
+    <script>
+        // Function to handle button click
+        document.getElementById("academics").addEventListener("click", function() {
+            // save role in session storage, will use it again when login
+            sessionStorage.setItem("role", 1);
+            
+            // Open another page
+            window.open("{{ url_for('welcome') }}", "_self");
+        });
+        document.getElementById("administrative").addEventListener("click", function() {
+            // save role in session storage, will use it again when login
+            sessionStorage.setItem("role", 2);
+            
+            // Open another page
+            window.open("{{ url_for('welcome') }}", "_self");
+        });
+        document.getElementById("admin").addEventListener("click", function() {
+            // save role in session storage, will use it again when login
+            sessionStorage.setItem("role", 3);
+            
+            // Open another page
+            window.open("{{ url_for('welcome') }}", "_self");
+        });
+    </script>
+    
+{% endblock %}
