@@ -5,7 +5,11 @@
 
 
 {% block content %} 
-   <style>
+
+<!-- Include navigation -->
+{% include 'nav.jinja' %}
+
+<style>
     nav {
         border-bottom: 1px solid black;
         overflow: auto
@@ -53,16 +57,6 @@
     }
 
 </style>
-
-<!--Navbar, you'll see the username here-->
-<nav style="border-bottom: 1px solid black;">
-    <button id="homeButton">Home</button>
-    <button id="repoButton">Knowledge</button>
-    <button id="createButton">Create</button>
-    <ol style="float: right">
-        <li id="profile" style="display:inline-block">Username:  {{ username }}</li>
-    </ol>
-</nav>
 
 <h1>Messaging App </h1>
 
@@ -136,26 +130,6 @@
 </main>
 
 <script src="/static/js/libs/socket.io.min.js"></script>
-<script name="navigation-script">
-    document.getElementById("homeButton").addEventListener("click", async function() {
-        let res = await axios.post("{{ url_for('home_user') }}", {
-            username: localStorage.getItem("username")
-        });
-        window.open(res.data, "_self")
-    });
-    document.getElementById("repoButton").addEventListener("click", async function() {
-        let res = await axios.post("{{ url_for('repo_user') }}", {
-            username: localStorage.getItem("username")
-        });
-        window.open(res.data, "_self")
-    });
-    document.getElementById("createButton").addEventListener("click", async function() {
-        let res = await axios.post("{{ url_for('create_user') }}", {
-            username: localStorage.getItem("username")
-        });
-        window.open(res.data, "_self")
-    });
-</script>
 <script>
     let room_id = 0;
 

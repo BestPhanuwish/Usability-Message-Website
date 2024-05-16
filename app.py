@@ -4,7 +4,7 @@ this is where you'll find all of the get/post request handlers
 the socket event handlers are inside of socket_routes.py
 '''
 
-from flask import Flask, render_template, request, abort, url_for
+from flask import Flask, render_template, request, abort, url_for, flash
 from flask_socketio import SocketIO
 from flask import redirect
 import db
@@ -145,18 +145,104 @@ def repo_user():
 
     return url_for('repo', username=request.json.get("username"))
 
-@app.route("/repo/user", methods=["POST"])
+@app.route("/create/user", methods=["POST"])
 def create_user():
     if not request.is_json:
         abort(404)
 
     return url_for('create', username=request.json.get("username"))
 
+@app.route("/profile/user", methods=["POST"])
+def profile_user():
+    if not request.is_json:
+        abort(404)
+
+    return url_for('profile', username=request.json.get("username"))
+
 # handler when a "404" error happens
 @app.errorhandler(404)
 def page_not_found(_):
     return render_template('404.jinja'), 404
 
+# 创建一个函数用来获取数据库链接
+def get_db_connection():
+    # 创建数据库链接到database.db文件
+    conn = sqlite3.connect('database.db')
+    # 设置数据的解析方法，有了这个设置，就可以像字典一样访问每一列数据
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def get_post(post_id):
+    conn = get_db_connection()
+    post = conn.execute('select * from posts where id = ?', (post_id,)).fetchone()
+    return post
+
+@app.route('/posts/<int:post_id>')
+def post(post_id):
+    post = get_post(post_id)
+    return render_template('post.jinja', post=post)
+
+@app.route('/posts/new', methods=('GET', 'POST'))
+def new():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        certify_username = session.get('username')
+        if certify_username is None:
+            print("This user not login")
+            return redirect(url_for('login'))
+        
+        # 调用上面的函数，获取链接
+        conn = get_db_connection()
+        # 查询所有数据，放到变量posts中
+        posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
+        conn.close()
+
+        if not title:
+            flash("标题不能为空", category='error')
+        elif not content:
+            flash("内容不能为kong", 'info')
+        else:
+            conn = get_db_connection()
+            conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
+            conn.commit()
+            conn.close()
+            flash("保存成功", 'success')
+            return render_template("repo.jinja", username=request.args.get("username"), posts=posts)
+
+    return render_template('new.jinja')
+
+@app.route('/posts/<int:post_id>/edit', methods=('GET', 'POST'))
+def edit(post_id):
+    post = get_post(post_id)
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        if not title:
+            flash('title can not be empty')
+        else:
+            conn = get_db_connection()
+            conn.execute('Update posts SET title = ?, content = ?'
+                         'Where id = ?',
+                         (title, content, post_id))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('index'))
+
+    return render_template('edit.jinja', post=post)
+
+@app.route('/posts/<int:post_id>/delete', methods=('POST',))
+def delete(post_id):
+    post = get_post(post_id)
+    conn = get_db_connection()
+    conn.execute('DELEte from posts where id =?', (post_id, ))
+    conn.commit()
+    conn.close()
+    flash( '删除成功!'.format(post['title']) )
+    return redirect(url_for('index'))
 
 # home page, where the messaging app is
 @app.route("/home")
@@ -181,8 +267,14 @@ def repo():
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
+    
+    # 调用上面的函数，获取链接
+    conn = get_db_connection()
+    # 查询所有数据，放到变量posts中
+    posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
+    conn.close()
 
-    return render_template("repo.jinja", username=request.args.get("username"))
+    return render_template("repo.jinja", username=request.args.get("username"), posts=posts)
 
 # craete article page, to publish an article
 @app.route("/create")
@@ -196,6 +288,19 @@ def create():
         return redirect(url_for('login'))
 
     return render_template("create.jinja", username=request.args.get("username"))
+
+# about me page, to see our profile
+@app.route("/profile")
+def profile():
+    if request.args.get("username") is None:
+        abort(404)
+
+    certify_username = session.get('username')
+    if certify_username is None:
+        print("This user not login")
+        return redirect(url_for('login'))
+
+    return render_template("profile.jinja", username=request.args.get("username"))
 
 
 if __name__ == '__main__':
