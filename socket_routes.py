@@ -26,6 +26,8 @@ room = Room()
 @socketio.on('connect')
 def connect():
     username = request.cookies.get("username")
+    print("ONLINE DETECT")
+    emit("online_detect", (username), broadcast=True)
     room_id = request.cookies.get("room_id")
     if room_id is None or username is None:
         return
@@ -39,11 +41,11 @@ def connect():
 @socketio.on('disconnect')
 def disconnect():
     username = request.cookies.get("username")
+    emit("offline_detect", (username), broadcast=True)
     room_id = request.cookies.get("room_id")
     if room_id is None or username is None:
         return
     emit("incoming", (f"{username} has disconnected", "red"), to=int(room_id))
-
 
 @socketio.on("send")
 def send(username, message, room_id, receiver):
@@ -120,6 +122,9 @@ def join(sender_name, receiver_name):
     sender = db.get_user(sender_name)
     if sender is None:
         return "Unknown sender!"
+    
+    if sender.mute == True:
+        return "You got mute, unable to join chat"
 
     room_id = room.get_room_id(receiver_name)
 
@@ -225,6 +230,23 @@ def decline_request(user_name, requestor_name):
     
     return 0
 
+# decline friend request event handler
+@socketio.on("remove_friend")
+def decline_request(user_name, friend_name):
+    receiver = db.get_user(friend_name)
+    if receiver is None:
+        return "Unknown friend name!"
+    
+    sender = db.get_user(user_name)
+    if sender is None:
+        return "Unknown sender!"
+    
+    # modify information on the database
+    db.remove_friend(user_name, friend_name)
+    db.remove_friend(friend_name, user_name)
+    
+    return 0
+
 # boardcast event to reload friend section for every user that connected to this pipe
 @socketio.on("reload_friend_section")
 def reload_friend_section(sender_name, receiver_name):
@@ -269,3 +291,18 @@ def give_public_key(public_key, room_id):
     print("The user had give public key back")
     print(public_key)
     emit("sendback_public_key", (public_key), to=room_id, include_self=False)
+
+# get role according to name
+@socketio.on("get_role")
+def get_role(name):
+    return str(db.get_role(name))
+
+# check if that user is online then wait for reply
+@socketio.on("check_online")
+def check_online(name):
+    emit("ask_online", (name), broadcast=True)
+
+# callback to confirm said user is online
+@socketio.on("is_online")
+def is_online(name):
+    emit("online_detect", (name), broadcast=True)

@@ -125,7 +125,12 @@
         <button onclick="accept_request(this)">Accept</button>
         <button onclick="decline_request(this)">Decline</button>
     </li>
-    <li id="friend-button" style="display: none;"><button onclick="join_room(this)">Friend</button></li>
+    <li id="friend-button" style="display: none;">
+        <button onclick="join_room(this)">Friend</button>
+        <p id="friend_status">Offline</p>
+        <p id="friend_role">Role: Unknown</p>
+        <button onclick="remove_friend(this)">delete</button>
+    </li>
 
 </main>
 
@@ -134,17 +139,6 @@
     let room_id = 0;
 
     $(document).ready(() => {
-        // call every time the page restart or enter the page
-
-        // set profile name and role
-        document.getElementById("profile").innerHTML = "Username: {{ username }} Role: " + getRoleName()
-
-        // kick the user if they tried to change url and login as another person
-        if (window.localStorage.getItem("username") != username) {
-            alert("NOT YOUR USERNAME");
-            window.open("404", "_self");
-        }
-
         reload_friend_section();
 
         // room_id is undefined if the user hasn't joined a room
@@ -221,6 +215,37 @@
     // an incoming from other user message
     socket.on("incoming_message", (msg, color="black") => {
         add_message(msg, color);
+    })
+
+    // if someone online/offline in the server, then change their status
+    socket.on("online_detect", (name) => {
+        let ulElement = document.querySelector('#friend_list .no-bullets');
+    
+        // Loop through each child element of the <ul> element
+        for (let child of ulElement.children) {
+            let friend_name = child.getAttribute("data");
+            if (friend_name == name) {
+                child.querySelector("p").innerHTML = "Online";
+            }
+        };
+    })
+    socket.on("offline_detect", (name) => {
+        let ulElement = document.querySelector('#friend_list .no-bullets');
+    
+        // Loop through each child element of the <ul> element
+        for (let child of ulElement.children) {
+            let friend_name = child.getAttribute("data");
+            if (friend_name == name) {
+                child.querySelector("p").innerHTML = "Offline";
+            }
+        };
+    })
+
+    // if got ask from server whether we're online, then reply
+    socket.on("ask_online", (name) => {
+        if (username == name) {
+            socket.emit("is_online", name);
+        }
     })
 
     // listen to an event to refresh friend section when
@@ -316,6 +341,35 @@
         });
     }
 
+    // we emit a remove friend event to the server
+    function remove_friend(button) {
+
+        // let receiver = $("#receiver").val();
+        let receiver = button.parentElement.getAttribute("data");
+        let friendInput = document.getElementById("receiver");
+
+        // if the user we talk to is one we delete then we leave room
+        if (friendInput.value == receiver) {
+            leave()
+            friendInput.value = receiver;
+            clear_message();
+            return;
+        }
+
+        // pass in the friend username to the server
+        socket.emit("remove_friend", username, receiver, (res) => {
+            // announce error if friend not exist
+            if (typeof res != "number") {
+                alert(res);
+                return;
+            }
+
+            // notify user and target user to refresh their friend section
+            // to update new state of friend section by updated database
+            socket.emit("reload_friend_section", username, receiver);  
+        });
+    }
+
     function clear_message() {
         // Get the reference to the message_box element
         let messageBox = document.getElementById("message_box");
@@ -351,6 +405,7 @@
             // this is a pretty bad way of doing error handling, but watevs
             if (typeof res != "number") {
                 alert(res);
+                friendInput.value = null;
                 return;
             }
 
@@ -410,8 +465,19 @@
             res.friends.forEach(function (item, index) {
                 let child = document.getElementById("friend-button").cloneNode(true);
                 child.removeAttribute('style');
-                child.setAttribute("data", item)
-                child.querySelector("button").innerHTML=item
+                child.setAttribute("data", item);
+                child.querySelector("button").innerHTML=item;
+
+                // set role
+                socket.emit("get_role", item, (res) => {
+                    let roleName = getRoleName(res.data);
+                    let roleNode = child.querySelectorAll('p')[1];
+                    roleNode.innerHTML = "Role: " + roleName;
+                });
+
+                // set status
+                socket.emit("check_online", item)
+
                 friendUlElement.append(child);
             });
             res.friend_sent.forEach(function (item, index) {

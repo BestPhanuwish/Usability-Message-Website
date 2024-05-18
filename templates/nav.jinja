@@ -26,6 +26,9 @@ Navigation Bar. This is only exist in homepage
                 <li class="nav-item active">
                     <a class="nav-link" id="createButton">Create Article</a>
                 </li>
+                <li class="nav-item active">
+                    <a class="nav-link" id="adminButton">Admin</a>
+                </li>
             </ul>
 
             <form class="form-inline my-2 my-md-0" action="{{ url_for('home') }}" method="post">
@@ -74,6 +77,16 @@ Navigation Bar. This is only exist in homepage
             });
             window.open(res.data, "_self")
         });
+        document.getElementById("adminButton").addEventListener("click", async function() {
+            let res = await axios.post("{{ url_for('admin_user') }}", {
+                username: localStorage.getItem("username")
+            });
+            if (res.data === "Error") {
+                alert("You are not an admin, get back student");
+                return;
+            }
+            window.open(res.data, "_self")
+        });
     </script>
     <script>
         $(document).ready(() => {
@@ -87,6 +100,14 @@ Navigation Bar. This is only exist in homepage
                 alert("NOT YOUR USERNAME");
                 window.open("404", "_self");
             }
+
+            // only show admin tab for staff
+            if (parseInt(sessionStorage.getItem("role")) > 0) {
+                document.getElementById("adminButton").style.display = "block";
+            } else {
+                document.getElementById("adminButton").style.display = "none";
+            }
+            
         })
 
         // Function to get role name from number

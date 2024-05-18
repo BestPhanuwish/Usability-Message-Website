@@ -22,24 +22,4 @@
         <button type="submit" class="btn btn-primary">submit</button>
     </div>
 </form>
-<script>
-    document.getElementById('passageForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the default form submission
-
-        let form = this; // Reference to the form
-
-        // Get the username from localStorage
-        let username = {{ username }};
-
-        // Append the username as a new input field to the form
-        let usernameInput = document.createElement('input');
-        usernameInput.type = 'hidden'; // Hidden input field
-        usernameInput.name = 'username'; // Set the name attribute
-        usernameInput.value = username; // Set the value
-        form.appendChild(usernameInput); // Append the input field to the form
-
-        // Submit the form
-        form.submit();
-    });
-</script>
 {% endblock %}

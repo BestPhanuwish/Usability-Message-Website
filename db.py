@@ -56,7 +56,7 @@ Base.metadata.create_all(engine2)
 # inserts a user to the database
 def insert_user(username: str, password: str, role: str):
     with Session(engine) as session:
-        user = User(username=username, password=password, role=role)
+        user = User(username=username, password=password, role=role, mute=False)
         session.add(user)
         session.commit()
 
@@ -65,6 +65,12 @@ def get_user(username: str):
     with Session(engine) as session:
         return session.query(User).filter_by(username=username).first()
 
+# gets a role from user database
+def get_role(username: str):
+    with Session(engine) as session:
+        user = session.query(User).filter_by(username=username).first()
+        return user.get_role()
+
 ### Below is what I've implemented ###
 
 # add friend to the database
@@ -72,6 +78,13 @@ def add_friend(username: str, friend_username: str):
     with Session(engine) as session:
         user = session.query(User).filter_by(username=username).first()
         user.add_friend(friend_username)
+        session.commit()
+        
+# remove friend on the database
+def remove_friend(username: str, friend_username: str):
+    with Session(engine) as session:
+        user = session.query(User).filter_by(username=username).first()
+        user.remove_friend(friend_username)
         session.commit()
 
 # add friend sent to the database
@@ -100,4 +113,18 @@ def remove_friend_request(username: str, friend_username: str):
     with Session(engine) as session:
         user = session.query(User).filter_by(username=username).first()
         user.remove_friend_request(friend_username)
+        session.commit()
+
+# mute user
+def mute_user(username: str):
+    with Session(engine) as session:
+        user = session.query(User).filter_by(username=username).first()
+        user.mute = True
+        session.commit()
+
+# unmute user
+def unmute_user(username: str):
+    with Session(engine) as session:
+        user = session.query(User).filter_by(username=username).first()
+        user.mute = False
         session.commit()

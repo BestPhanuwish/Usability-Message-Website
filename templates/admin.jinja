@@ -1,0 +1,72 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+
+<!-- Include navigation -->
+{% include 'nav.jinja' %}
+
+<style>
+    #mute-container {
+        display: flex;
+        padding-top: 4em;
+    }
+
+    #mute-container form {
+        width: 50%;
+        padding-right: 4em;
+        padding-left: 4em;
+    }
+</style>
+
+<h1>{% block title %} Manage Your User {% endblock %}</h1>
+
+<section id="mute-container">
+    <form method="post" id="muteForm">
+        <div class="form-group">
+            <label for="mute-username">Mute User:</label>
+            <input type="text" name="mute-username" placeholder="username" class="form-control" id="mute-username">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+    <form method="post" id="unmuteForm">
+        <div class="form-group">
+            <label for="unmute-username">Unmute User:</label>
+            <input type="text" name="unmute-username" placeholder="username" class="form-control" id="unmute-username">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</section>
+
+<script>
+    document.getElementById('muteForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent form submission
+        let muteUsername = document.getElementById('mute-username').value;
+        $("#mute-username").val("");
+        console.log('Mute Username:', muteUsername);
+
+        let res = await axios.post(`/admin/submit?username=${encodeURIComponent(muteUsername)}`);
+        if (res.data) {
+            alert(res.data);
+            return;
+        }
+    });
+
+    document.getElementById('unmuteForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent form submission
+        const unmuteUsername = document.getElementById('unmute-username').value;
+        $("#unmute-username").val("");
+        console.log('Unmute Username:', unmuteUsername);
+
+        let res = await axios.post(`/admin/submit2?username=${encodeURIComponent(unmuteUsername)}`);
+        if (res.data) {
+            alert(res.data);
+            return;
+        }
+    });
+</script>
+
+{% endblock %}

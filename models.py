@@ -10,7 +10,7 @@ Prisma docs also looks so much better in comparison
 or use SQLite, if you're not into fancy ORMs (but be mindful of Injection attacks :) )
 '''
 
-from sqlalchemy import String, Integer, PickleType, Column
+from sqlalchemy import String, Integer, Boolean, PickleType, Column
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.mutable import MutableList
 from typing import Dict
@@ -31,6 +31,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, primary_key=True)
     password: Mapped[str] = mapped_column(String)
     role: Mapped[int] = mapped_column(Integer)
+    mute: Mapped[bool] = mapped_column(Boolean)
     
     # New attribute to store a list of friends and friend request
     friends = Column(MutableList.as_mutable(PickleType), default=[])
@@ -60,6 +61,9 @@ class User(Base):
     # Method to remove a friend that sent a request from (notification tab)
     def remove_friend_request(self, friend_username: str):
         self.friend_request.remove(friend_username)
+        
+    def get_role(self):
+        return self.role
     
 
 # stateful counter used to generate the room id
