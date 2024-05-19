@@ -35,6 +35,7 @@
     {% for post in posts %}
     <a href="{{url_for('post', post_id=post['id'])}}">
         <h2>{{ post['title'] }}</h2>
+        <h3>{{ post['author'] }}</h3>
     </a>
 
     <span class="badge badge-primary">{{ post['created'] }}</span>

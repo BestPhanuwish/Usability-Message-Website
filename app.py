@@ -292,9 +292,9 @@ def admin_submit2():
     
     return f"{target_usernamme} got unmuted"
 
-def get_db_connection():
-    conn = sqlite3.connect('web_A3/database.db')
 
+def get_db_connection():
+    conn = sqlite3.connect('database/db_info.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -302,7 +302,6 @@ def get_post(post_id):
     conn = get_db_connection()
     post = conn.execute('select * from posts where id = ?', (post_id,)).fetchone()
     return post
-
 
 @app.route('/web_index')
 def web_index():
@@ -312,9 +311,10 @@ def web_index():
 
     return render_template('show.html', posts=posts)
 
-@app.route('/posts/<int:post_id>')
+@app.route('/posts/<int:post_id>', methods=('POST',))
 def post(post_id):
     post = get_post(post_id)
+
     return render_template('post.html', post=post)
 
 @app.route('/posts/new', methods=('GET', 'POST'))
@@ -322,14 +322,17 @@ def new():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-
+        author = session.get('username')
+        print("author:", author)
+        role = db.get_role(author)
+        print("role:", role)
         if not title:
             flash("The title can not be empty", category='error')
         elif not content:
             flash("Can not be empty", 'info')
         else:
             conn = get_db_connection()
-            conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
+            conn.execute('insert into posts (title, content, author, role) values(?, ?, ?, ?)', (title, content, author, role, ))
             conn.commit()
             conn.close()
             flash("save successfully", 'success')
@@ -340,11 +343,9 @@ def new():
 @app.route('/posts/<int:post_id>/edit', methods=('GET', 'POST'))
 def edit(post_id):
     post = get_post(post_id)
-
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-
         if not title:
             flash('title can not be empty')
         else:
@@ -382,7 +383,7 @@ def search():
     return render_template('search_results.html', articles=articles)
 
 def search_articles(keyword):
-    conn = sqlite3.connect('web_A3/database.db')
+    conn = sqlite3.connect('database/db_info.db')
     cursor = conn.cursor()
 
     search_pattern = f'%{keyword}%'
@@ -399,17 +400,16 @@ def search_articles(keyword):
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    """
-    # If you had https you can uncomment this part
-    ssl_args = {
-        'certfile': './database/new_localhost.crt',
-        'keyfile': './database/new_localhost.key'
-    }
+    socketio.run(app, port=5000, debug=True)
 
-    listener = eventlet.listen(('localhost', 5000))
+    # ssl_args = {
+    #     'certfile': './database/new_localhost.crt',
+    #     'keyfile': './database/new_localhost.key'
+    # }
+    #
+    # listener = eventlet.listen(('localhost', 5000))
+    #
+    # ssl_listener = eventlet.wrap_ssl(listener, **ssl_args, servere_side=True)
+    #
+    # eventlet.wsgi.server(ssl_listener, app)
 
-    ssl_listener = eventlet.wrap_ssl(listener, **ssl_args, servere_side=True)
-
-    eventlet.wsgi.server(ssl_listener, app)
-    """
