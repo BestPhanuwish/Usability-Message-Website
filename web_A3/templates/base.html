@@ -10,7 +10,7 @@
 
 <body>
     <nav class="navbar navbar-expand-md navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('index')}}">My Website</a>
+        <a class="navbar-brand" href="{{ url_for('web_index')}}">My Website</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -22,6 +22,9 @@
                 </li>
                 <li class="nav-item active">
                     <a class="nav-link" href="{{url_for('about')}}">About User</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{url_for('try_comment')}}">评论区</a>
                 </li>
             </ul>
 

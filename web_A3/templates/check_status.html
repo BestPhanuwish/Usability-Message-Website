@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends List</title>
+</head>
+<body>
+    <div id="friends-list">
+        <!-- Friends will be dynamically added here -->
+    </div>
+
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $.ajax({
+                url: '/api/friends',
+                method: 'GET',
+                success: function(response) {
+                    var friendsList = $('#friends-list');
+                    response.forEach(function(friend) {
+                        var status = friend.online ? 'Online' : 'Offline';
+                        var role = friend.role;
+                        var friendElement = $('<div class="friend">' +
+                            '<div class="friend-name">' + friend.name + '</div>' +
+                            '<div class="friend-status">' + status + '</div>' +
+                            '<div class="friend-role">' + role + '</div>' +
+                            '</div>');
+                        friendsList.append(friendElement);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching friends:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

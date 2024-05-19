@@ -1,5 +1,5 @@
 import secrets
-from flask import Flask, url_for, render_template, flash, request, redirect
+from flask import Flask, url_for, render_template, flash, request, redirect, jsonify
 import sqlite3
 import sqlalchemy
 
@@ -20,7 +20,7 @@ def get_post(post_id):
     return post
 
 @app.route('/')
-def index():
+def web_index():
     # 调用上面的函数，获取链接
     conn = get_db_connection()
     # 查询所有数据，放到变量posts中
@@ -41,16 +41,16 @@ def new():
         content = request.form['content']
 
         if not title:
-            flash("标题不能为空", category='error')
+            flash("Can not be empty", category='error')
         elif not content:
-            flash("内容不能为kong", 'info')
+            flash("Can not be empty", 'info')
         else:
             conn = get_db_connection()
             conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
             conn.commit()
             conn.close()
             flash("保存成功", 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('web_index'))
 
     return render_template('new.html')
 
@@ -71,7 +71,7 @@ def edit(post_id):
                          (title, content, post_id))
             conn.commit()
             conn.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('web_index'))
 
     return render_template('edit.html', post=post)
 
@@ -83,7 +83,7 @@ def delete(post_id):
     conn.commit()
     conn.close()
     flash( '删除成功!'.format(post['title']) )
-    return redirect(url_for('index'))
+    return redirect(url_for('web_index'))
 
 @app.route('/about')
 def about():
@@ -120,6 +120,10 @@ def search_articles(keyword):
 
     # 返回结果
     return results
+
+@app.route('/try_comment')
+def try_comment():
+    return render_template('try_comment.html')
 
 
 # # Account Permission Part
@@ -172,6 +176,17 @@ def search_articles(keyword):
 # @role_required('instructor')
 # def moderate():
 #     return 'Discussion Moderation Panel for Instructors'
+
+friends = [
+    {"name": "John", "online": True, "role": "Student"},
+    {"name": "Alice", "online": False, "role": "Staff"},
+    # Add more friends as needed
+]
+
+@app.route('/posts/friends')
+def get_friends():
+    return jsonify(friends)
+
 
 
 if __name__ == '__main__':
