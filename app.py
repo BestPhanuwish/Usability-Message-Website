@@ -166,8 +166,9 @@ def home():
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
+    role = db.get_role(certify_username)
 
-    return render_template("home.jinja", username=request.args.get("username"))
+    return render_template("home.jinja", username=request.args.get("username"), role=role)
 
 # knowledge repo page, where we can reed article
 @app.route("/repo")
@@ -177,6 +178,7 @@ def repo():
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
+    role = db.get_role(certify_username)
 
     # 调用上面的函数，获取链接
     conn = get_db_connection()
@@ -184,7 +186,7 @@ def repo():
     posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
     conn.close()
 
-    return render_template("repo.jinja", username=certify_username, posts=posts)
+    return render_template("repo.jinja", username=certify_username, role=role, posts=posts)
 
 # craete article page, to publish an article
 @app.route("/create")
@@ -211,20 +213,14 @@ def profile():
 # admin page
 @app.route("/admin")
 def admin():
-    if request.args.get("username") is None:
-        abort(404)
 
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
-    
     username = session.get("username")
     user = db.get_user(username)
     if user == None or user.role == 0:
-        abort(404)
+        print("This user not login or you're not an admin to access this page")
+        return redirect(url_for('login'))
 
-    return render_template("admin.jinja", username=request.args.get("username"))
+    return render_template("admin.jinja", username=username)
 
 # form in admin page submitted
 @app.route("/admin/submit", methods=["POST"])
@@ -264,7 +260,7 @@ def admin_submit2():
     return f"{target_usernamme} got unmuted"
 
 def get_db_connection():
-    conn = sqlite3.connect('web_A3/database.db')
+    conn = sqlite3.connect('database/db_info.db')
 
     conn.row_factory = sqlite3.Row
     return conn
@@ -285,25 +281,43 @@ def web_index():
 
 @app.route('/posts/<int:post_id>')
 def post(post_id):
+    certify_username = session.get('username')
+    if certify_username is None:
+        print("This user not login")
+        return redirect(url_for('login'))
+    role = db.get_role(certify_username)
+    
     post = get_post(post_id)
-    return render_template('post.html', post=post)
+    return render_template('post.html', username=certify_username, role=role, post=post)
 
 @app.route('/posts/new', methods=('GET', 'POST'))
 def new():
     if request.method == 'POST':
+        
+        username = session.get('username')
+        if username is None:
+            print("This user not login")
+            return redirect(url_for('login'))
+        
         title = request.form['title']
         content = request.form['content']
+        role = db.get_role(username)
 
         if not title:
-            flash("The title can not be empty", category='error')
+            flash("The title cannot be empty", category='error')
+            return redirect(url_for('repo'))
         elif not content:
-            flash("Can not be empty", 'info')
+            flash("Content cannot be empty", 'info')
+            return redirect(url_for('repo'))
+        elif db.is_mute(username) == True:
+            flash("You got muted, unable to post article", category='error')
+            return redirect(url_for('repo'))
         else:
             conn = get_db_connection()
-            conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
+            conn.execute('insert into posts (title, content, author, role) values(?, ?, ?, ?)', (title, content, username, role, ))            
             conn.commit()
             conn.close()
-            flash("save successfully", 'success')
+            flash("saved successfully", 'success')
             return redirect(url_for('repo'))
 
     return render_template('new.html')
@@ -353,7 +367,7 @@ def search():
     return render_template('search_results.html', articles=articles)
 
 def search_articles(keyword):
-    conn = sqlite3.connect('web_A3/database.db')
+    conn = sqlite3.connect('database/db_info.db')
     cursor = conn.cursor()
 
     search_pattern = f'%{keyword}%'

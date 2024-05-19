@@ -7,6 +7,7 @@ Navigation Bar. This is only exist in homepage
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="{{ url_for('static', filename= 'css/bootstrap.min.css') }}">
+        <script src="/static/js/libs/jquery.min.js"></script>
     </head>
 
     <nav class="navbar navbar-expand-md navbar-light bg-light">
@@ -39,7 +40,7 @@ Navigation Bar. This is only exist in homepage
         </div>
 
         <ol style="float: right">
-            <li id="profileButton" style="display:inline-block">Username:  {{ username }}  href="{{ url_for('profile') }}"</li>
+            <li id="profileButton" style="display:inline-block">Username: user Role: Student</li>
         </ol>
     </nav>
     <div class="container">
@@ -63,9 +64,7 @@ Navigation Bar. This is only exist in homepage
             window.open("{{ url_for('profile') }}", "_self")
         });
         document.getElementById("adminButton").addEventListener("click", async function() {
-            let res = await axios.post("{{ url_for('admin_user') }}", {
-                username: localStorage.getItem("username")
-            });
+            let res = await axios.post("{{ url_for('admin_user') }}");
             if (res.data === "Error") {
                 alert("You are not an admin, get back student");
                 return;
@@ -76,15 +75,10 @@ Navigation Bar. This is only exist in homepage
     <script>
         $(document).ready(() => {
             // call every time the page restart or enter the page
+            let username = localStorage.getItem("username");
 
             // set profile name and role
-            document.getElementById("profileButton").innerHTML = "Username: {{ username }} Role: " + getRoleName()
-
-            // kick the user if they tried to change url and login as another person
-            if (window.localStorage.getItem("username") != username) {
-                alert("NOT YOUR USERNAME");
-                window.open("404", "_self");
-            }
+            document.getElementById("profileButton").innerHTML = "Username: " + username + " Role: " + getRoleName();
 
             // only show admin tab for staff
             if (parseInt(sessionStorage.getItem("role")) > 0) {

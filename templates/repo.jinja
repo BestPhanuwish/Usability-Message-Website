@@ -36,14 +36,28 @@
     <a href="{{url_for('post', post_id=post['id'])}}">
         <h2>{{ post['title'] }}</h2>
     </a>
+    <div>
+        <h3 style="display: inline; margin-right: 10px;">By {{ post['author'] }}</h3>
+        <p style="display: inline;">{{ post['role'] }}</p>
+    </div>
 
     <span class="badge badge-primary">{{ post['created'] }}</span>
+    {% if username == post['author'] or role > 0 %}
     <a href="{{url_for('edit', post_id=post['id']) }}">
         <span class="badge badge-warning">edit</span>
     </a>
+    {% endif %}
 
     <hr>
     {% endfor %}
+
 </div>
+
+<script>
+    $(document).ready(() => {
+        let username = localStorage.getItem("username");
+        let roleNum = parseInt(sessionStorage.getItem("role"));
+    })
+</script>
 
 {% endblock %}

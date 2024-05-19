@@ -65,6 +65,9 @@ class User(Base):
     def get_role(self):
         return self.role
     
+    def is_mute(self):
+        return self.mute
+    
 
 # stateful counter used to generate the room id
 class Counter():
