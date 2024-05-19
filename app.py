@@ -40,15 +40,6 @@ message_history_db = {}
 def index():
     return render_template("index.jinja")
 
-# welcome page
-@app.route("/welcome")
-def welcome():
-    return render_template("welcome.jinja")
-
-# staff page
-@app.route("/staff")
-def staff():
-    return render_template("staff.jinja")
 
 # login page
 @app.route("/login")
@@ -76,7 +67,6 @@ def signup_user():
 
     username_enter = request.json.get("username")
     password_enter = request.json.get("password")
-    role = int(request.json.get("role"))
 
     # Generate a salt
     salt = bcrypt.gensalt()
@@ -84,7 +74,7 @@ def signup_user():
     enc_password = bcrypt.hashpw(password_enter.encode('utf-8'), salt)
 
     if db.get_user(username_enter) is None:
-        db.insert_user(username_enter, enc_password, role)
+        db.insert_user(username_enter, enc_password)
         print("Now, waiting for following page")
         return url_for('login', username=username_enter)
 
@@ -99,7 +89,6 @@ def login_user():
 
     Username_ENter = request.json.get("username")
     User_Enter_Pwd = request.json.get("password")
-    role = request.json.get("role")
 
     # Connect to the SQLite database
     conn = sqlite3.connect('database/main.db')
@@ -109,9 +98,6 @@ def login_user():
     result = cursor.fetchone()
 
     if result:
-        if result[2] != int(role):
-            return "Role not match"
-        
         # print("result: ", result)
         hashed_password = result[1]
         
@@ -132,46 +118,6 @@ def login_user():
     else:
         return "Error username not found"
 
-# handles a post request when user click home on navigate bar
-@app.route("/home/user", methods=["POST"])
-def home_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('home', username=request.json.get("username"))
-
-@app.route("/repo/user", methods=["POST"])
-def repo_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('repo', username=request.json.get("username"))
-
-@app.route("/create/user", methods=["POST"])
-def create_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('create', username=request.json.get("username"))
-
-@app.route("/profile/user", methods=["POST"])
-def profile_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('profile', username=request.json.get("username"))
-
-@app.route("/admin/user", methods=["POST"])
-def admin_user():
-    if not request.is_json:
-        abort(404)
-        
-    username = session.get("username")
-    user = db.get_user(username)
-    if user == None or user.role == 0:
-        return "Error"
-
-    return url_for('admin', username=request.json.get("username"))
 
 # handler when a "404" error happens
 @app.errorhandler(404)
@@ -192,109 +138,48 @@ def home():
 
     return render_template("home.jinja", username=request.args.get("username"))
 
-# knowledge repo page, where we can reed article
-@app.route("/repo")
-def repo():
-    if request.args.get("username") is None:
-        abort(404)
 
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
+# New function for A3
+#
+# app.permanent_session_lifetime = timedelta(days=365)
+#
+# essays = {}  # This will store essays with id as key
+# views_count = {}  # This will store views count for each essay
+#
+# @app.route('/')
+# def index():
+#     return render_template('show.html', essays=essays)
+#
+# @app.route('/submit', methods=['GET', 'POST'])
+# def submit_essay():
+#     if request.method == 'POST':
+#         title = request.form['title']
+#         content = request.form['content']
+#         author = session.get('username')
+#         essay_id = len(essays) + 1
+#         essays[essay_id] = {'title': title, 'content': content, 'author': author}
+#         views_count[essay_id] = 0
+#         return redirect(url_for('index'))
+#     return render_template('submit_essay.html')
+#
+# @app.route('/essay/<int:essay_id>')
+# def view_essay(essay_id):
+#     views_count[essay_id] += 1
+#     return render_template('view_essay.html', essay=essays[essay_id], view_count=views_count[essay_id])
+#
+# @app.route('/delete/<int:essay_id>')
+# def delete_essay(essay_id):
+#     if session.get('username') == essays[essay_id]['author']:
+#         del essays[essay_id]
+#         del views_count[essay_id]
+#     return redirect(url_for('index'))
 
-    # 调用上面的函数，获取链接
-    conn = get_db_connection()
-    # 查询所有数据，放到变量posts中
-    posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
-    conn.close()
 
-    return render_template("repo.jinja", username=request.args.get("username"), posts=posts)
-
-# craete article page, to publish an article
-@app.route("/create")
-def create():
-    if request.args.get("username") is None:
-        abort(404)
-
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
-
-    return render_template("create.jinja", username=request.args.get("username"))
-
-# about me page, to see our profile
-@app.route("/profile")
-def profile():
-    if request.args.get("username") is None:
-        abort(404)
-
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
-
-    return render_template("profile.jinja", username=request.args.get("username"))
-
-# admin page
-@app.route("/admin")
-def admin():
-    if request.args.get("username") is None:
-        abort(404)
-
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
-    
-    username = session.get("username")
-    user = db.get_user(username)
-    if user == None or user.role == 0:
-        abort(404)
-
-    return render_template("admin.jinja", username=request.args.get("username"))
-
-# form in admin page submitted
-@app.route("/admin/submit", methods=["POST"])
-def admin_submit():
-    if request.args.get("username") is None:
-        abort(404)
-    target_usernamme = request.args.get("username")
-    
-    username = session.get("username")
-    user = db.get_user(username)
-    if user == None or user.role == 0:
-        return "You got logout or you're a student that is not allowed"
-    
-    if db.get_user(target_usernamme) == None:
-        return f"{target_usernamme} not exist"
-    
-    db.mute_user(target_usernamme)
-    
-    return f"{target_usernamme} got muted"
-
-@app.route("/admin/submit2", methods=["POST"])
-def admin_submit2():
-    if request.args.get("username") is None:
-        abort(404)
-    target_usernamme = request.args.get("username")
-    
-    username = session.get("username")
-    user = db.get_user(username)
-    if user == None or user.role == 0:
-        return "You got logout or you're a student that is not allowed"
-    
-    if db.get_user(target_usernamme) == None:
-        return f"{target_usernamme} not exist"
-    
-    db.unmute_user(target_usernamme)
-    
-    return f"{target_usernamme} got unmuted"
-
+# 创建一个函数用来获取数据库链接
 def get_db_connection():
-    conn = sqlite3.connect('web_A3/database.db')
-
+    # 创建数据库链接到database.db文件
+    conn = sqlite3.connect('database/info_essay.db')
+    # 设置数据的解析方法，有了这个设置，就可以像字典一样访问每一列数据
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -303,12 +188,17 @@ def get_post(post_id):
     post = conn.execute('select * from posts where id = ?', (post_id,)).fetchone()
     return post
 
-
 @app.route('/web_index')
 def web_index():
+    # 调用上面的函数，获取链接
     conn = get_db_connection()
+    # 查询所有数据，放到变量posts中
     posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
     conn.close()
+    #把查询出来的posts传给网页
+    print("posts:", posts)
+    username = session.get('username')
+    print("username:", username)
 
     return render_template('show.html', posts=posts)
 
@@ -323,13 +213,18 @@ def new():
         title = request.form['title']
         content = request.form['content']
 
+        username = session.get('username')
+        # print(username)
+
+        # connection = sqlite3.connect('database/chat_database.db')
+
         if not title:
             flash("The title can not be empty", category='error')
         elif not content:
-            flash("Can not be empty", 'info')
+            flash("can not be empty", 'info')
         else:
             conn = get_db_connection()
-            conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
+            conn.execute('insert into posts (title, content, author) values(?, ?, ?)', (title, content, username,))
             conn.commit()
             conn.close()
             flash("save successfully", 'success')
@@ -376,32 +271,41 @@ def about():
 @app.route('/search', methods=['POST'])
 def search():
     keyword = request.form['keyword']
-    
-    articles = search_articles(keyword)
-
+    # 模拟从数据库中搜索文章
+    articles = search_articles(keyword)  # 假设这个函数根据关键词返回文章列表
+    print(articles)
     return render_template('search_results.html', articles=articles)
 
 def search_articles(keyword):
+    # 连接到 SQLite 数据库
     conn = sqlite3.connect('web_A3/database.db')
+    # 创建一个游标对象
     cursor = conn.cursor()
 
+    # 构建查询语句，使用通配符实现模糊匹配
     search_pattern = f'%{keyword}%'
     query = "SELECT id, title FROM posts WHERE title LIKE ? OR content LIKE ?"
 
+    # 执行查询
     cursor.execute(query, (search_pattern, search_pattern))
+
+    # 获取所有匹配的记录
     results = cursor.fetchall()
 
+    # 关闭游标和连接
     cursor.close()
     conn.close()
 
+    # 返回结果
     return results
+
+@app.route('/try_comment')
+def try_comment():
+    return render_template('try_comment.html')
 
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    """
-    # If you had https you can uncomment this part
     ssl_args = {
         'certfile': './database/new_localhost.crt',
         'keyfile': './database/new_localhost.key'
@@ -412,4 +316,3 @@ if __name__ == '__main__':
     ssl_listener = eventlet.wrap_ssl(listener, **ssl_args, servere_side=True)
 
     eventlet.wsgi.server(ssl_listener, app)
-    """
