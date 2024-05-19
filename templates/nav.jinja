@@ -21,17 +21,17 @@ Navigation Bar. This is only exist in homepage
                     <a class="nav-link" id="homeButton">Home</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" id="repoButton">Knowledge Repository</a>
+                    <a class="nav-link" id="repoButton" href="{{ url_for('repo') }}">Knowledge Repository</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" id="createButton">Create Article</a>
+                    <a class="nav-link" id="createButton" href="{{ url_for('new') }}">Create Article</a>
                 </li>
                 <li class="nav-item active">
                     <a class="nav-link" id="adminButton">Admin</a>
                 </li>
             </ul>
 
-            <form class="form-inline my-2 my-md-0" action="{{ url_for('home') }}" method="post">
+            <form class="form-inline my-2 my-md-0" action="{{ url_for('search') }}" method="post">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search for key words" aria-label="Search" name="keyword" required>
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">search</button>
             </form>
@@ -39,7 +39,7 @@ Navigation Bar. This is only exist in homepage
         </div>
 
         <ol style="float: right">
-            <li id="profileButton" style="display:inline-block">Username:  {{ username }}</li>
+            <li id="profileButton" style="display:inline-block">Username:  {{ username }}  href="{{ url_for('profile') }}"</li>
         </ol>
     </nav>
     <div class="container">
@@ -59,23 +59,8 @@ Navigation Bar. This is only exist in homepage
             });
             window.open(res.data, "_self")
         });
-        document.getElementById("repoButton").addEventListener("click", async function() {
-            let res = await axios.post("{{ url_for('repo_user') }}", {
-                username: localStorage.getItem("username")
-            });
-            window.open(res.data, "_self")
-        });
-        document.getElementById("createButton").addEventListener("click", async function() {
-            let res = await axios.post("{{ url_for('create_user') }}", {
-                username: localStorage.getItem("username")
-            });
-            window.open(res.data, "_self")
-        });
         document.getElementById("profileButton").addEventListener("click", async function() {
-            let res = await axios.post("{{ url_for('profile_user') }}", {
-                username: localStorage.getItem("username")
-            });
-            window.open(res.data, "_self")
+            window.open("{{ url_for('profile') }}", "_self")
         });
         document.getElementById("adminButton").addEventListener("click", async function() {
             let res = await axios.post("{{ url_for('admin_user') }}", {

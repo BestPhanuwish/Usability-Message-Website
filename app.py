@@ -140,38 +140,15 @@ def home_user():
 
     return url_for('home', username=request.json.get("username"))
 
-@app.route("/repo/user", methods=["POST"])
-def repo_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('repo', username=request.json.get("username"))
-
-@app.route("/create/user", methods=["POST"])
-def create_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('create', username=request.json.get("username"))
-
-@app.route("/profile/user", methods=["POST"])
-def profile_user():
-    if not request.is_json:
-        abort(404)
-
-    return url_for('profile', username=request.json.get("username"))
-
 @app.route("/admin/user", methods=["POST"])
 def admin_user():
-    if not request.is_json:
-        abort(404)
         
     username = session.get("username")
     user = db.get_user(username)
     if user == None or user.role == 0:
         return "Error"
 
-    return url_for('admin', username=request.json.get("username"))
+    return url_for('admin', username=username)
 
 # handler when a "404" error happens
 @app.errorhandler(404)
@@ -195,8 +172,6 @@ def home():
 # knowledge repo page, where we can reed article
 @app.route("/repo")
 def repo():
-    if request.args.get("username") is None:
-        abort(404)
 
     certify_username = session.get('username')
     if certify_username is None:
@@ -209,33 +184,29 @@ def repo():
     posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
     conn.close()
 
-    return render_template("repo.jinja", username=request.args.get("username"), posts=posts)
+    return render_template("repo.jinja", username=certify_username, posts=posts)
 
 # craete article page, to publish an article
 @app.route("/create")
 def create():
-    if request.args.get("username") is None:
-        abort(404)
-
+    
     certify_username = session.get('username')
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
 
-    return render_template("create.jinja", username=request.args.get("username"))
+    return render_template("new.html", username=certify_username)
 
 # about me page, to see our profile
 @app.route("/profile")
 def profile():
-    if request.args.get("username") is None:
-        abort(404)
 
     certify_username = session.get('username')
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
 
-    return render_template("profile.jinja", username=request.args.get("username"))
+    return render_template("profile.jinja", username=certify_username)
 
 # admin page
 @app.route("/admin")
@@ -333,7 +304,7 @@ def new():
             conn.commit()
             conn.close()
             flash("save successfully", 'success')
-            return redirect(url_for('web_index'))
+            return redirect(url_for('repo'))
 
     return render_template('new.html')
 
@@ -354,7 +325,7 @@ def edit(post_id):
                          (title, content, post_id))
             conn.commit()
             conn.close()
-            return redirect(url_for('web_index'))
+            return redirect(url_for('repo'))
 
     return render_template('edit.html', post=post)
 
@@ -366,7 +337,7 @@ def delete(post_id):
     conn.commit()
     conn.close()
     flash('delete successful!'.format(post['title']))
-    return redirect(url_for('web_index'))
+    return redirect(url_for('repo'))
 
 @app.route('/about')
 def about():

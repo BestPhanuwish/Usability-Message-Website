@@ -30,7 +30,7 @@
     <div class="alter alter-danger">{{ messages }}</div>
     {% endfor %}
 
-    <h1 xmlns="http://www.w3.org/1999/html">{% block title %} Welcome to My Website {% endblock %}</h1>
+    <h1 xmlns="http://www.w3.org/1999/html">{% block title %} Knowledge Repository {% endblock %}</h1>
 
     {% for post in posts %}
     <a href="{{url_for('post', post_id=post['id'])}}">
