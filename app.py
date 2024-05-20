@@ -301,6 +301,15 @@ def make_comment(post_id):
     flash('Comment added successfully!', 'success')
     return redirect(url_for('post', post_id=post_id))
 
+@app.route('/posts/<int:post_id>/comments/<int:comment_id>/delete', methods=['POST'])
+def delete_comment(post_id, comment_id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM comments WHERE id = ?', (comment_id,))
+    conn.commit()
+    conn.close()
+    flash('Comment deleted successfully!', 'success')
+    return redirect(url_for('post', post_id=post_id))
+
 @app.route('/posts/<int:post_id>')
 def post(post_id):
     certify_username = session.get('username')
