@@ -267,8 +267,11 @@ def get_db_connection():
 
 def get_post(post_id):
     conn = get_db_connection()
-    post = conn.execute('select * from posts where id = ?', (post_id,)).fetchone()
-    return post
+    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+
+    comments = conn.execute('SELECT * FROM comments WHERE post_id = ? ORDER BY created DESC', (post_id,)).fetchall()
+    conn.close()
+    return post, comments
 
 
 @app.route('/web_index')
@@ -279,6 +282,25 @@ def web_index():
 
     return render_template('show.html', posts=posts)
 
+@app.route('/posts/<int:post_id>/comment', methods=['POST'])
+def make_comment(post_id):
+    role = request.args.get('role')
+    print("role:", role)
+    name = request.args.get("username")
+    print("name:", name)
+    # name = "try_name"
+    comment_text = request.form['comment']
+    if not comment_text.strip():
+        flash('Comment cannot be empty!', 'error')
+        return redirect(url_for('post', post_id=post_id))
+
+    conn = get_db_connection()
+    conn.execute('INSERT INTO comments (body, post_id, author_name) VALUES (?, ?, ?)', (comment_text, post_id, name, ))
+    conn.commit()
+    conn.close()
+    flash('Comment added successfully!', 'success')
+    return redirect(url_for('post', post_id=post_id))
+
 @app.route('/posts/<int:post_id>')
 def post(post_id):
     certify_username = session.get('username')
@@ -287,8 +309,11 @@ def post(post_id):
         return redirect(url_for('login'))
     role = db.get_role(certify_username)
     
-    post = get_post(post_id)
-    return render_template('post.html', username=certify_username, role=role, post=post)
+    post, comments = get_post(post_id)
+    if not post:
+        return "Post not Found"
+    
+    return render_template('post.html', username=certify_username, role=role, post=post, comments=comments)
 
 @app.route('/posts/new', methods=('GET', 'POST'))
 def new():

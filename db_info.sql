@@ -1,3 +1,16 @@
+DROP TABLE IF EXISTS comments;
+CREATE TABLE comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    body TEXT NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    post_id INTEGER NOT NULL,
+    author_name TEXT,
+    role TEXT,
+    author_id INTEGER,
+    FOREIGN KEY (post_id) REFERENCES posts (id),
+    FOREIGN KEY (author_id) REFERENCES users (id)
+);
+
 DROP TABLE IF EXISTS posts;
 CREATE TABLE posts (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
