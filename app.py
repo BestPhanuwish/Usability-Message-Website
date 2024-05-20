@@ -282,6 +282,8 @@ def get_post(post_id):
     conn.close()
     return post, comments
 
+
+
 @app.route('/posts/<int:post_id>/comment', methods=['POST'])
 def make_comment(post_id):
     role = request.args.get('role')
@@ -301,19 +303,14 @@ def make_comment(post_id):
     flash('Comment added successfully!', 'success')
     return redirect(url_for('post', post_id=post_id))
 
-# @app.route('/posts/<int:post_id>', methods=['POST'])
-# def make_comment(post_id):
-#     comment = request.form['comment']
-#     if comment:
-#         conn = get_db_connection()
-#         conn.execute('INSERT INTO comments (body, post_id) VALUES (?, ?)', (comment, post_id))
-#         conn.commit()
-#         conn.close()
-#         flash('Comment added!')
-#     else:
-#         flash('Comment cannot be empty!', 'error')
-#
-#     return redirect(url_for('post', post_id=post_id))
+@app.route('/posts/<int:post_id>/comments/<int:comment_id>/delete', methods=['POST'])
+def delete_comment(post_id, comment_id):
+    conn = get_db_connection()
+    conn.execute('DELETE FROM comments WHERE id = ?', (comment_id,))
+    conn.commit()
+    conn.close()
+    flash('Comment deleted successfully!', 'success')
+    return redirect(url_for('post', post_id=post_id))
 
 @app.route('/web_index')
 def web_index():
