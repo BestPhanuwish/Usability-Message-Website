@@ -5,16 +5,60 @@ Sign up page, pretty much the same as login.
 
 
 {% block content %} 
-    <h1>Sign Up</h1>
-    <form id="signup-form">
-        <p>Username</p>
-        <input id="username"/>
-        <p>Password</p>
-        <input id="password" type="password"/>
-        <button type="submit">Sign up</button>
-    </form>
+
+    <style>
+        .single-form {
+            height: 100%;
+            margin: 100px 30% 600px 30%;
+        }
+        #signup-form {
+            background-color: var(--light-white);
+            color: var(--darker-grey);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 25px;
+        }
+        #signup-form label, #signup-form input {
+            margin: 0.5em;
+        }
+    </style>
+
+    <main class="single-form">
+        <form id="signup-form">
+            <h1>Sign Up</h1>
+            <p>Username</p>
+            <input id="username"/>
+            <p>Password</p>
+            <input id="password" type="password"/>
+            <button type="submit">Sign up</button>
+            <p>Already had an account? <a href="{{ url_for('login') }}">Login!</a>
+        </form>
+    </main>
 
     <script>
+
+        $(document).ready(() => {
+            // display header depends on the role selected
+            document.getElementById("signup-form").querySelector("h1").innerHTML = getRoleDisplay() + " Signup"
+        })
+
+        function getRoleDisplay() {
+            let number = parseInt(sessionStorage.getItem("role"));
+            switch(number) {
+                case 0:
+                    return "Student";
+                case 1:
+                    return "Academics Staff";
+                case 2:
+                    return "Administrative Staff";
+                case 3:
+                    return "Admin";
+                default:
+                    return "Unknown";
+            }
+        }
 
         // form is safer than just onclick function
         document.getElementById("signup-form").addEventListener("submit", function(event) {

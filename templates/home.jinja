@@ -10,6 +10,11 @@
 {% include 'nav.jinja' %}
 
 <style>
+    body, html {
+        background-color: var(--darker-grey);
+        color: var(--light-white);
+    }
+
     nav {
         border-bottom: 1px solid black;
         overflow: auto
@@ -17,23 +22,38 @@
 
     main {
         display: flex;
-        height: 100%;
+        height: 80%;
+        width: 100%;
     }
-
-    #message_part, #friend_part {
+    
+    main > div {
         flex: 1;
-    }
-
-    #friend_part {
-        display: flex;
+        padding: 10px;
+        box-sizing: border-box;
+        text-align: center;
     }
 
     #message_box {
-        border: 1px solid black; 
-        height: 400px; 
+        border: 2px solid var(--light-white);
+        background-color: var(--lighter-grey);
+        height: 80%; 
         width: 800px; 
         overflow: auto;
         padding: 2px;
+        text-align: left;
+    }
+
+    #input_box {
+        text-align: left;
+    }
+
+    #input_box input {
+        width: 600px;
+        padding: 0;
+    }
+
+    #input_box form {
+        display: flex;
     }
 
     #friend_list, #request_list, #notification_list {
@@ -43,6 +63,45 @@
 
     #friend_list ul li, #request_list ul li {
         padding: 5px
+    }
+
+    .friend-container {
+        display: flex;
+        width: 100%;
+    }
+    
+    .join-room-btn {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 80%;
+        text-align: left;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    
+    .friend-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .friend-status {
+        margin-top: 10px;
+    }
+    
+    .remove-friend-btn {
+        width: 20%;
+        text-align: center;
+        background-color: red;
+        color: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }
+
+    #request_list {
+        text-align: left;
     }
 
     .text  {
@@ -55,15 +114,25 @@
         padding: 0; /* Remove padding */
         margin: 0; /* Remove margins */
     }
+    
 
 </style>
 
-<h1>Messaging App </h1>
-
 <main>
+
+    <!-- Friend part -->
+    <div id="friend_part">
+        <section id="friend_list">
+            <h2>Your Friends</h2>
+            <ul class="no-bullets">
+            </ul>
+        </section>
+    </div>
 
     <!-- Messages box part -->
     <div id="message_part">
+        <h1>Messaging App</h1>
+
         <!-- The messages are displayed here -->
         <section id="message_box"></section>
 
@@ -90,13 +159,8 @@
         </section>
     </div>
 
-    <!-- Friend and friend request part -->
-    <div id="friend_part">
-        <section id="friend_list">
-            <h2>Your Friends</h2>
-            <ul class="no-bullets">
-            </ul>
-        </section>
+    <!-- Friend request part -->
+    <div>
         <section id="request_list">
             <h2>Friend Requests</h2>
 
@@ -126,10 +190,18 @@
         <button onclick="decline_request(this)">Decline</button>
     </li>
     <li id="friend-button" style="display: none;">
-        <button onclick="join_room(this)">Friend</button>
-        <p id="friend_status">Offline</p>
-        <p id="friend_role">Role: Unknown</p>
-        <button onclick="remove_friend(this)">delete</button>
+        <div class="friend-container">
+            <button class="join-room-btn" onclick="join_room(this)">
+                <div class="friend-info">
+                    <span class="friend-name">Friend</span>
+                    <span class="friend-role">Role: Unknown</span>
+                </div>
+                <div class="friend-status">
+                    <p>Status: Offline</p>
+                </div>
+            </button>
+            <button class="remove-friend-btn" onclick="remove_friend(this)">X</button>
+        </div>
     </li>
 
 </main>
@@ -162,6 +234,21 @@
     // 3: Admin Staff
     function getRoleName() {
         let number = parseInt(sessionStorage.getItem("role"));
+        switch(number) {
+            case 0:
+                return "student";
+            case 1:
+                return "staff";
+            case 2:
+                return "administrator";
+            case 3:
+                return "admin";
+            default:
+                return "Unknown";
+        }
+    }
+    function getRoleDisplay(rol) {
+        let number = parseInt(rol)
         switch(number) {
             case 0:
                 return "student";
@@ -208,12 +295,12 @@
     const socket = io();
 
     // an incoming message arrives, we'll add the message to the message box
-    socket.on("incoming", (msg, color="black") => {
+    socket.on("incoming", (msg, color="white") => {
         add_message(msg, color);
     })
 
     // an incoming from other user message
-    socket.on("incoming_message", (msg, color="black") => {
+    socket.on("incoming_message", (msg, color="white") => {
         add_message(msg, color);
     })
 
@@ -225,7 +312,7 @@
         for (let child of ulElement.children) {
             let friend_name = child.getAttribute("data");
             if (friend_name == name) {
-                child.querySelector("p").innerHTML = "Online";
+                child.querySelector(".friend-status").innerHTML = "Status: Online";
             }
         };
     })
@@ -236,7 +323,7 @@
         for (let child of ulElement.children) {
             let friend_name = child.getAttribute("data");
             if (friend_name == name) {
-                child.querySelector("p").innerHTML = "Offline";
+                child.querySelector(".friend-status").innerHTML = "Status: Offline";
             }
         };
     })
@@ -345,7 +432,7 @@
     function remove_friend(button) {
 
         // let receiver = $("#receiver").val();
-        let receiver = button.parentElement.getAttribute("data");
+        let receiver = button.parentElement.parentElement.getAttribute("data");
         let friendInput = document.getElementById("receiver");
 
         // if the user we talk to is one we delete then we leave room
@@ -382,7 +469,7 @@
     function join_room(button) {
 
         // let receiver = $("#receiver").val();
-        let receiver = button.parentElement.getAttribute("data");
+        let receiver = button.parentElement.parentElement.getAttribute("data");
 
         // set value of hidden old receiver input field
         // so that we can access that as a global variable
@@ -466,12 +553,12 @@
                 let child = document.getElementById("friend-button").cloneNode(true);
                 child.removeAttribute('style');
                 child.setAttribute("data", item);
-                child.querySelector("button").innerHTML=item;
+                child.querySelector(".friend-name").innerHTML=item;
 
                 // set role
                 socket.emit("get_role", item, (res) => {
-                    let roleName = getRoleName(res.data);
-                    let roleNode = child.querySelectorAll('p')[1];
+                    let roleName = getRoleDisplay(res);
+                    let roleNode = child.querySelector('.friend-role');
                     roleNode.innerHTML = "Role: " + roleName;
                 });
 
@@ -482,7 +569,7 @@
             });
             res.friend_sent.forEach(function (item, index) {
                 let child = document.createElement("li");
-                child.innerHTML=item
+                child.innerHTML= "- " + item;
                 requestUlElement.append(child);
             });
             res.friend_request.forEach(function (item, index) {

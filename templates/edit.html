@@ -5,6 +5,18 @@
 <!-- Include navigation -->
 {% include 'nav.jinja' %}
 
+<style>
+    body, html, main {
+        background-color: var(--darker-grey);
+        color: var(--light-white);
+    }
+
+    nav {
+        border-bottom: 2px solid var(--light-white);
+        overflow: auto
+    }
+</style>
+
 <h1>{% block title %} Edit "{{post['title']}}" {% endblock %} </h1>
 
 <form method="post">
@@ -12,7 +24,6 @@
         <label for="title">Title</label>
         <input type="text" name="title" placeholder="Post Title" class="form-control"
                value="{{request.form['title'] or post['title'] }}">
-        <input>
     </div>
 
     <div class="form-group">

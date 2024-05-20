@@ -5,13 +5,25 @@
 <!-- Include navigation -->
 {% include 'nav.jinja' %}
 
+<style>
+    body, html, main {
+        background-color: var(--darker-grey);
+        color: var(--light-white);
+    }
+
+    nav {
+        border-bottom: 2px solid var(--light-white);
+        overflow: auto
+    }
+</style>
+
 <h1>{% block title %} Create Article {% endblock %}</h1>
 
 <form method="post">
     <div class="form-group">
         <label for="title">Title</label>
         <input type="text" name="title" placeholder="title" class="form-control"
-               value="{{request.form['title']}}"><input>
+               value="{{request.form['title']}}">
     </div>
 
     <div class="form-group">

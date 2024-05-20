@@ -100,7 +100,6 @@ def login_user():
     Username_ENter = request.json.get("username")
     User_Enter_Pwd = request.json.get("password")
     role = request.json.get("role")
-    print("login_role:", role)
 
     # Connect to the SQLite database
     conn = sqlite3.connect('database/main.db')
@@ -110,8 +109,7 @@ def login_user():
     result = cursor.fetchone()
 
     if result:
-        print(result[2])
-        if result[2] != (role):
+        if result[2] != int(role):
             return "Role not match"
         
         # print("result: ", result)
@@ -181,7 +179,6 @@ def repo():
         print("This user not login")
         return redirect(url_for('login'))
     role = db.get_role(certify_username)
-    print("repo_role: ", role)
 
     # 调用上面的函数，获取链接
     conn = get_db_connection()
@@ -285,8 +282,6 @@ def web_index():
 
     return render_template('show.html', posts=posts)
 
-
-
 def get_author_name():
     certify_username = session.get('username')
     return certify_username
@@ -294,7 +289,6 @@ def get_author_name():
 def get_role_for_comment(username):
     conn = sqlite3.connect('database/main.db')
     role = conn.execute('select role from user where username == ?', (username, )).fetchone()
-    print("元组：", role)
     return role
 
 @app.route('/posts/<int:post_id>/comment', methods=['POST'])
@@ -303,13 +297,13 @@ def make_comment(post_id):
     print("role:", role)
     name = request.args.get("username")
     print("name:", name)
-
+    
     certify_username = get_author_name()
     print("certify_username:", certify_username)
 
     role_certify = get_role_for_comment(certify_username)
     print("role_certify: ", type(role_certify))
-
+    
     comment_text = request.form['comment']
     if not comment_text.strip():
         flash('Comment cannot be empty!', 'error')
@@ -336,13 +330,11 @@ def delete_comment(post_id, comment_id):
 @app.route('/posts/<int:post_id>')
 def post(post_id):
     certify_username = session.get('username')
-    # print("certify_username:", certify_username)
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
     role = db.get_role(certify_username)
-    print("post_role: ", role)
-
+    
     post, comments = get_post(post_id)
     if not post:
         return "Post not Found"
@@ -371,9 +363,6 @@ def new():
         title = request.form['title']
         content = request.form['content']
         role = db.get_role(username)
-        print("new_role: ", role)
-        role_after_change = number_for_role(role)
-        print("role_after_change: ", role_after_change)
 
         if not title:
             flash("The title cannot be empty", category='error')
@@ -386,7 +375,7 @@ def new():
             return redirect(url_for('repo'))
         else:
             conn = get_db_connection()
-            conn.execute('insert into posts (title, content, author, role) values(?, ?, ?, ?)', (title, content, username, role, ))
+            conn.execute('insert into posts (title, content, author, role) values(?, ?, ?, ?)', (title, content, username, role, ))            
             conn.commit()
             conn.close()
             flash("saved successfully", 'success')
@@ -456,7 +445,7 @@ def search_articles(keyword):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app)
     """
     # If you had https you can uncomment this part
     ssl_args = {

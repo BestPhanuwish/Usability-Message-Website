@@ -1,0 +1,62 @@
+:root {
+    --primary-red: #CE1127;
+    --lighter-grey: #313033;
+    --darker-grey: #1B1A1C;
+    --light-white: #DFDFDF;
+}
+
+body, html {
+    height: 100%;
+    background-color: var(--darker-grey);
+    color: var(--light-white);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto';
+}
+
+h1 {
+    font-weight: 100;
+    font-size: 40px;
+}
+
+p, button, label {
+    font-family: sans-serif;
+    font-size: 16px;
+}
+
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    transition: background-color 0.25s ease;
+}
+button:hover {
+    background-color: var(--primary-red);
+    cursor: pointer;
+    color: var(--light-white);
+}
+
+.role {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+/* Student */
+.role[role="0"] {
+    border: 2px solid green;
+    color: green;
+}
+
+/* Staff */
+.role[role="1"] {
+    border: 2px solid blue;
+    color: blue;
+}
+
+/* Administrator or Admin */
+.role[role="2"], .role[role="3"] {
+    border: 2px solid red;
+    color: red;
+}

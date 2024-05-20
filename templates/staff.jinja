@@ -5,10 +5,31 @@ Let user select what kind of staff
 
 
 {% block content %} 
-    <h1>What staff are you</h1>
-    <button id="academics">Academics Staff</button>
-    <button id="administrative">Administrative Staff</button>
-    <button id="admin">Admin Staff</button>
+
+    <style>
+        .role-select {
+            text-align: center;
+            height: 50%;
+            margin: 0;
+            align-items: center;
+            display: flex; /* Add this line */
+            flex-direction: column; /* Add this line */
+            justify-content: center; /* Optional: to center vertically */
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .role-select button {
+            width: 50%;
+        }
+    </style>
+
+    <main class="role-select">
+        <h1>What staff are you</h1>
+        <button id="academics">Academics Staff</button>
+        <button id="administrative">Administrative Staff</button>
+        <button id="admin">Admin Staff</button>
+    </main>
 
     <script>
         // Function to handle button click
@@ -17,21 +38,21 @@ Let user select what kind of staff
             sessionStorage.setItem("role", 1);
             
             // Open another page
-            window.open("{{ url_for('welcome') }}", "_self");
+            window.open("{{ url_for('login') }}", "_self");
         });
         document.getElementById("administrative").addEventListener("click", function() {
             // save role in session storage, will use it again when login
             sessionStorage.setItem("role", 2);
             
             // Open another page
-            window.open("{{ url_for('welcome') }}", "_self");
+            window.open("{{ url_for('login') }}", "_self");
         });
         document.getElementById("admin").addEventListener("click", function() {
             // save role in session storage, will use it again when login
             sessionStorage.setItem("role", 3);
             
             // Open another page
-            window.open("{{ url_for('welcome') }}", "_self");
+            window.open("{{ url_for('login') }}", "_self");
         });
     </script>
     

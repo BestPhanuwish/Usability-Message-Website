@@ -4,11 +4,31 @@ Index page, the "default" page when you visit "http://localhost/"
  -->
 {% extends 'base.jinja' %}
 
-
 {% block content %} 
-    <h1>Please select your role</h1>
-    <button id="student">Student</button>
-    <button id="staff">Staff</button>
+
+    <style>
+        .role-select {
+            text-align: center;
+            height: 50%;
+            margin: 0;
+            align-items: center;
+            display: flex; /* Add this line */
+            flex-direction: column; /* Add this line */
+            justify-content: center; /* Optional: to center vertically */
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .role-select button {
+            width: 50%;
+        }
+    </style>
+
+    <main class="role-select">
+        <h1>Please select your role</h1>
+        <button id="student">Student</button>
+        <button id="staff">Staff</button>
+    </main>
 
     <script>
         // Function to handle button click
@@ -17,7 +37,7 @@ Index page, the "default" page when you visit "http://localhost/"
             sessionStorage.setItem("role", 0);
             
             // Open another page
-            window.open("{{ url_for('welcome') }}", "_self");
+            window.open("{{ url_for('login') }}", "_self");
         });
 
         document.getElementById("staff").addEventListener("click", function() {
