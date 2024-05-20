@@ -100,6 +100,7 @@ def login_user():
     Username_ENter = request.json.get("username")
     User_Enter_Pwd = request.json.get("password")
     role = request.json.get("role")
+    print("login_role:", role)
 
     # Connect to the SQLite database
     conn = sqlite3.connect('database/main.db')
@@ -109,7 +110,8 @@ def login_user():
     result = cursor.fetchone()
 
     if result:
-        if result[2] != int(role):
+        print(result[2])
+        if result[2] != (role):
             return "Role not match"
         
         # print("result: ", result)
@@ -166,8 +168,9 @@ def home():
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
+    role = db.get_role(certify_username)
 
-    return render_template("home.jinja", username=request.args.get("username"))
+    return render_template("home.jinja", username=request.args.get("username"), role=role)
 
 # knowledge repo page, where we can reed article
 @app.route("/repo")
@@ -177,6 +180,8 @@ def repo():
     if certify_username is None:
         print("This user not login")
         return redirect(url_for('login'))
+    role = db.get_role(certify_username)
+    print("repo_role: ", role)
 
     # 调用上面的函数，获取链接
     conn = get_db_connection()
@@ -184,7 +189,7 @@ def repo():
     posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
     conn.close()
 
-    return render_template("repo.jinja", username=certify_username, posts=posts)
+    return render_template("repo.jinja", username=certify_username, role=role, posts=posts)
 
 # craete article page, to publish an article
 @app.route("/create")
@@ -211,20 +216,14 @@ def profile():
 # admin page
 @app.route("/admin")
 def admin():
-    if request.args.get("username") is None:
-        abort(404)
 
-    certify_username = session.get('username')
-    if certify_username is None:
-        print("This user not login")
-        return redirect(url_for('login'))
-    
     username = session.get("username")
     user = db.get_user(username)
     if user == None or user.role == 0:
-        abort(404)
+        print("This user not login or you're not an admin to access this page")
+        return redirect(url_for('login'))
 
-    return render_template("admin.jinja", username=request.args.get("username"))
+    return render_template("admin.jinja", username=username)
 
 # form in admin page submitted
 @app.route("/admin/submit", methods=["POST"])
@@ -264,15 +263,10 @@ def admin_submit2():
     return f"{target_usernamme} got unmuted"
 
 def get_db_connection():
-    conn = sqlite3.connect('web_A3/database.db')
+    conn = sqlite3.connect('database/db_info.db')
 
     conn.row_factory = sqlite3.Row
     return conn
-
-# def get_post(post_id):
-#     conn = get_db_connection()
-#     post = conn.execute('select * from posts where id = ?', (post_id,)).fetchone()
-#     return post
 
 def get_post(post_id):
     conn = get_db_connection()
@@ -283,6 +277,25 @@ def get_post(post_id):
     return post, comments
 
 
+@app.route('/web_index')
+def web_index():
+    conn = get_db_connection()
+    posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
+    conn.close()
+
+    return render_template('show.html', posts=posts)
+
+
+
+def get_author_name():
+    certify_username = session.get('username')
+    return certify_username
+
+def get_role_for_comment(username):
+    conn = sqlite3.connect('database/main.db')
+    role = conn.execute('select role from user where username == ?', (username, )).fetchone()
+    print("元组：", role)
+    return role
 
 @app.route('/posts/<int:post_id>/comment', methods=['POST'])
 def make_comment(post_id):
@@ -290,14 +303,22 @@ def make_comment(post_id):
     print("role:", role)
     name = request.args.get("username")
     print("name:", name)
-    # name = "try_name"
+
+    certify_username = get_author_name()
+    print("certify_username:", certify_username)
+
+    role_certify = get_role_for_comment(certify_username)
+    print("role_certify: ", type(role_certify))
+
     comment_text = request.form['comment']
     if not comment_text.strip():
         flash('Comment cannot be empty!', 'error')
         return redirect(url_for('post', post_id=post_id))
 
+    role_number = role_certify[0]
+
     conn = get_db_connection()
-    conn.execute('INSERT INTO comments (body, post_id, author_name) VALUES (?, ?, ?)', (comment_text, post_id, name, ))
+    conn.execute('INSERT INTO comments (body, post_id, author_name, role) VALUES (?, ?, ?, ?)', (comment_text, post_id, certify_username, role_number,) )
     conn.commit()
     conn.close()
     flash('Comment added successfully!', 'success')
@@ -312,37 +333,63 @@ def delete_comment(post_id, comment_id):
     flash('Comment deleted successfully!', 'success')
     return redirect(url_for('post', post_id=post_id))
 
-@app.route('/web_index')
-def web_index():
-    conn = get_db_connection()
-    posts = conn.execute('SELECT * FROM posts order by created desc').fetchall()
-    conn.close()
-
-    return render_template('show.html', posts=posts)
-
 @app.route('/posts/<int:post_id>')
 def post(post_id):
+    certify_username = session.get('username')
+    # print("certify_username:", certify_username)
+    if certify_username is None:
+        print("This user not login")
+        return redirect(url_for('login'))
+    role = db.get_role(certify_username)
+    print("post_role: ", role)
+
     post, comments = get_post(post_id)
     if not post:
         return "Post not Found"
-    return render_template('post.html', post=post, comments=comments)
+    
+    return render_template('post.html', username=certify_username, role=role, post=post, comments=comments)
+
+def number_for_role(role):
+    if role == '0':
+        return 'student'
+    if role == '1':
+        return "staff"
+    if role == '2':
+        return "administrator"
+    if role == '3':
+        return "admin"
 
 @app.route('/posts/new', methods=('GET', 'POST'))
 def new():
     if request.method == 'POST':
+        
+        username = session.get('username')
+        if username is None:
+            print("This user not login")
+            return redirect(url_for('login'))
+        
         title = request.form['title']
         content = request.form['content']
+        role = db.get_role(username)
+        print("new_role: ", role)
+        role_after_change = number_for_role(role)
+        print("role_after_change: ", role_after_change)
 
         if not title:
-            flash("The title can not be empty", category='error')
+            flash("The title cannot be empty", category='error')
+            return redirect(url_for('repo'))
         elif not content:
-            flash("Can not be empty", 'info')
+            flash("Content cannot be empty", 'info')
+            return redirect(url_for('repo'))
+        elif db.is_mute(username) == True:
+            flash("You got muted, unable to post article", category='error')
+            return redirect(url_for('repo'))
         else:
             conn = get_db_connection()
-            conn.execute('insert into posts (title, content) values(?, ?)', (title, content))
+            conn.execute('insert into posts (title, content, author, role) values(?, ?, ?, ?)', (title, content, username, role, ))
             conn.commit()
             conn.close()
-            flash("save successfully", 'success')
+            flash("saved successfully", 'success')
             return redirect(url_for('repo'))
 
     return render_template('new.html')
@@ -375,7 +422,7 @@ def delete(post_id):
     conn.execute('DELEte from posts where id =?', (post_id, ))
     conn.commit()
     conn.close()
-    flash('delete successful!'.format(post['title']))
+    flash('delete successful!')
     return redirect(url_for('repo'))
 
 @app.route('/about')
@@ -392,7 +439,7 @@ def search():
     return render_template('search_results.html', articles=articles)
 
 def search_articles(keyword):
-    conn = sqlite3.connect('web_A3/database.db')
+    conn = sqlite3.connect('database/db_info.db')
     cursor = conn.cursor()
 
     search_pattern = f'%{keyword}%'
@@ -406,17 +453,7 @@ def search_articles(keyword):
 
     return results
 
-# posts = {'title': 'Example Post', 'comments': []}
-# # @app.route('/post/<post_id>', methods=['GET'])
-# # def post_comment(post_id):
-# #     post = posts[post_id]
-# #     return render_template('post.html', post=post)
-# @app.route('/post/<post_id>', methods=['POST'])
-# def make_comment(post_id):
-#     post = get_post(post_id)
-#     comment = request.form['comment']
-#     post['comments'].append(comment)  # 将评论添加到帖子的评论列表中
-#     return redirect(url_for('post', post_id=post_id))
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

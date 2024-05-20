@@ -30,7 +30,7 @@ class User(Base):
     # in other words we've mapped the username Python object property to an SQL column of type String 
     username: Mapped[str] = mapped_column(String, primary_key=True)
     password: Mapped[str] = mapped_column(String)
-    role: Mapped[int] = mapped_column(Integer)
+    role: Mapped[int] = mapped_column(String)
     mute: Mapped[bool] = mapped_column(Boolean)
     
     # New attribute to store a list of friends and friend request
